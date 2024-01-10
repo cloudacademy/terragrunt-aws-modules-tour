@@ -1,0 +1,76 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Passing Outputs Between Terraform Modules with Terragrunt",
+  "steps": [
+    {
+      "directory": "",
+      "description": "The Terraform project is split into a directory for each component the VPC, Network, and EC2. The Terraform configuration for each component contains variables for inputs and outputs to pass data between each component. For example, the EC2 instance module (**ec2/**) will need data from the **network/** and **vpc/** folders.\n\nNotice there is a **terragrunt.hcl** file in the root directory. This file will contain the provider and remote state configuration settings which will be used in each subdirectory.",
+      "title": "Introduction"
+    },
+    {
+      "file": "terragrunt.hcl",
+      "description": "The `generate` block allows Terraform resource blocks to be written on the fly when using Terragrunt. This strategy can be used to customize the `provider` and `terraform` blocks to use the same configuration settings in all directories. ",
+      "line": 1,
+      "title": "Provider"
+    },
+    {
+      "file": "network/terragrunt.hcl",
+      "description": "Each directory contains a similar **terragrunt.hcl** file that contains the module dependencies and inputs needed to deploy the resource.\n\nThe `dependency` block declares that the network folder configuration depends on the output from the Terraform configuration in the **vpc** directory. \n\nTerragrunt will recognize this dependency and wait to apply this configuration until the resources in the **vpc** directory have been deployed.",
+      "line": 1,
+      "title": "Terragrunt Configuration"
+    },
+    {
+      "file": "network/terragrunt.hcl",
+      "description": "The `inputs` block contains the input that is passed into the Terraform configuration in the form of `a TF_VAR_variablename` environment variable, \n\nThe output from the **vpc** directory is passed in by declaring the dependency followed by the dependency label name and output value: `dependency.vpc.outputs.vpc_id`.  The data from the `vpc_id` argument is passed into the  **network** folder configuration as a variable",
+      "line": 6,
+      "title": "Inputs"
+    },
+    {
+      "file": "network/terragrunt.hcl",
+      "description": "Lastly, the `include` block instructs Terragrunt to include the **terragrunt.hcl** configuration settings from the parent directory as well. This includes the settings for the remote state and the AWS provider. ",
+      "line": 11,
+      "title": "Include"
+    },
+    {
+      "file": "ec2/terragrunt.hcl",
+      "description": "The difference between the **ec2** and **network** Terragrunt configurations is that the **ec2** configuration has two dependencies. \n\nThe EC2 instance needs the VPC security group ID and the Subnet ID to deploy. \n\nTo specify multiple dependencies within the Terragrunt configuration, multiple `dependency` blocks are created. The data is then passed into the **ec2** Terraform configuration as variables.",
+      "line": 1,
+      "title": "EC2 Instance"
+    },
+    {
+      "directory": "",
+      "description": "Click the following command to begin deploying your resources:\n\n>> terragrunt run-all apply\n\nEach module will be listed with the appropriate dependencies.\n\nEnter *y* to apply the configurations in each directory.",
+      "title": "Apply"
+    },
+    {
+      "directory": "ec2",
+      "description": "You will notice the **provider.tf** file is automatically generated in each directory where Terragrunt is executed.\n\nTerragrunt will detect the remote S3 bucket does not exist, and will prompt you to create it.\n\nEnter *y* once more to continue.",
+      "title": "Remote State"
+    },
+    {
+      "directory": "",
+      "description": "The S3 backend components are created and configured to best practices. \n\nThe **terraform apply** command will run against the **vpc** directory since it has no dependencies. Once the resources are deployed, a **terraform output** call is executed to obtain the outputs from the state of the VPC.\n\nThe outputs from **vpc** module are formatted in JSON and then automatically passed into the **network** module during the **apply** process.\n\nFinally, the EC2 instance is deployed using the output variables from the **vpc** and **network** modules.",
+      "selection": {
+        "start": {
+          "line": 5,
+          "character": 126
+        },
+        "end": {
+          "line": 5,
+          "character": 131
+        }
+      },
+      "title": "Deployment Order"
+    },
+    {
+      "directory": "",
+      "description": "The entire application infrastructure is deployed using separate remote states with a single command. \n\n**Note** The **terragrunt run-all apply** command should be used in the initial deployment of an environment. If you were to modify one infrastructure component, i.e. the **ec2** module, you would just run **terragrunt apply** in the **ec2** directory to apply the change. ",
+      "title": "Description"
+    },
+    {
+      "directory": "",
+      "description": "Return to the Cloud Academy Lab browser tab and run the validation check associated with this lab step.",
+      "title": "Complete"
+    }
+  ]
+}
